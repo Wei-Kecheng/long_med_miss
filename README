@@ -1,0 +1,3 @@
+Description
+LMI: Performs longitudinal multiple imputation.
+GMM_PCA: Implements the generalized method of moments with principal component analysis to estimate parameters.
