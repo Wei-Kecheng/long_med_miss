@@ -94,7 +94,7 @@ library(hdi) #de-biased lasso
 library(HDMT) #FDR control mediation
 library(bama) #Bayesian mediation
 p=1879;q=8;t=5
-data=read.csv(paste0(file.path(Sys.getenv("USERPROFILE"),"Desktop"),"/application/data_origin1.csv"))
+#data=read.csv(paste0(file.path(Sys.getenv("USERPROFILE"),"Desktop"),"/application/data.csv"))
 #data clean##################################################################################################
 na1=which(is.na(data$smoke))
 na2=which(is.na(data$race6cat))
