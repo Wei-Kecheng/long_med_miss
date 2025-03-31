@@ -6,8 +6,8 @@ Data for application can be requested from the Detroit Neighborhood Health Study
 # Usage
 - `LMI(data,p,t,patt)`
 - `GMM_PCA(data,p,t,lam1,lam2,a=3.7,c=10,patt)`
-- `CC=function(data,p,t,lam1,lam2,a=3.7,c=10)`
-- `CS=function(data,p,t,lam1,a=3.7,c=10)`
+- `CC(data,p,t,lam1,lam2,a=3.7,c=10)`
+- `CS(data,p,t,lam1,a=3.7,c=10)`
 - `MIX(data,p,t)`
 - `PATH(data,p,t,tun,L,R,lam)`
 - `HIMA(data,p,t)`
@@ -31,7 +31,7 @@ Data for application can be requested from the Detroit Neighborhood Health Study
 - c: Tuning parameter for the bi-level penalty, with a default value of 10.
 - patt: Specifies different non-monotone missingness structures.
 
-` CC=function(data,p,t,lam1,lam2,a=3.7,c=10)`
+` CC(data,p,t,lam1,lam2,a=3.7,c=10)`
 - data: An imputed dataset without missingness.
 - p: Number of mediators.
 - t: Number of time points.
@@ -40,7 +40,7 @@ Data for application can be requested from the Detroit Neighborhood Health Study
 - a: Tuning parameter for the SCAD penalty, with a default value of 3.7.
 - c: Tuning parameter for the bi-level penalty, with a default value of 10.
 
-` CS=function(data,p,t,lam1,a=3.7,c=10)`
+` CS(data,p,t,lam1,a=3.7,c=10)`
 - data: An imputed dataset without missingness.
 - p: Number of mediators.
 - t: Number of time points.
@@ -77,8 +77,8 @@ Data for application can be requested from the Detroit Neighborhood Health Study
 - Returns a list of multiple imputed datasets.
 
 `GMM_PCA(data,p,t,lam1,lam2,a=3.7,c=10,patt)`
-`CC=function(data,p,t,lam1,lam2,a=3.7,c=10)`
-`CS=function(data,p,t,lam1,a=3.7,c=10)`
+`CC(data,p,t,lam1,lam2,a=3.7,c=10)`
+`CS(data,p,t,lam1,a=3.7,c=10)`
 `MIX(data,p,t)`
 `PATH(data,p,t,tun,L,R,lam)`
 `HIMA(data,p,t)`
