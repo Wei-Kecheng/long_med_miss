@@ -16,7 +16,7 @@ For simulation data, we first generate fully observed longitudinal measurements 
   
 # Arguments
 `LMI(data,p,t,patt)`
-- data: A data frame with nt rows and p+5 columns, representing n samples observed over multiple time points. Each row corresponds to an observation at a specific time point. Columns 1 to p: mediators. Column p+1: exposure. Column p+2: outcome. Column p+3: sample ID. Column p+4: time ID. Column p+5: missingness group ID. Missing values are denoted as NA.
+- data: A data frame with nt rows and p+5 columns, representing n samples observed over t time points. Each row corresponds to an observation at a specific time point. Columns 1 to p: mediators. Column p+1: exposure. Column p+2: outcome. Column p+3: sample ID. Column p+4: time ID. Column p+5: missingness group ID. Missing values are denoted as NA.
 - p: Number of mediators.
 - t: Number of time points.
 - patt: Specifies different non-monotone missingness structures.
