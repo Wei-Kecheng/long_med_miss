@@ -87,155 +87,274 @@ Data for application can be requested from the Detroit Neighborhood Health Study
 
 # Examples
 ```r
-library(MASS)
 library(glmnet) #lasso
 library(softImpute) #matrix completion for imputation
 library(hdmed) #Pathway lasso mediation
 library(hdi) #de-biased lasso
 library(HDMT) #FDR control mediation
 library(bama) #Bayesian mediation
-n=350 #sample size
-p=50 #dimension of mediators
-t=4 #time
-rho1=0.5
-rho2=0.1
-#exposure
-x1=runif(n)
-x2=x1+runif(n)
-x3=x2+runif(n)
-x4=x3+runif(n)
-x=c(rbind(x1,x2,x3,x4))
-#data frame
-data=matrix(NA,n*t,p+5)
-data[,p+1]=c(t(x))
-data[,p+3]=rep(1:n,each=t)
-data[,p+4]=rep(1:t,n)
-#residuals#######################################################################
-b=10;b1=p/b
-em=c()
-for (j in 1:b) {
+p=1879;q=8;t=5
+data=read.csv(paste0(file.path(Sys.getenv("USERPROFILE"),"Desktop"),"/application/data_origin1.csv"))
+#data clean##################################################################################################
+na1=which(is.na(data$smoke))
+na2=which(is.na(data$race6cat))
+na3=which(is.na(data$female))
+na4=which(is.na(data$Social_Cohesion))
+na5=which(is.na(data$w1_educ)&
+            is.na(data$w2_educ)&
+            is.na(data$w3_educ)&
+            is.na(data$w4_educ)&
+            is.na(data$w5_educ))
+na6=which(is.na(data$w1_age_final)&
+            is.na(data$w2_age_final)&
+            is.na(data$w3_age_final)&
+            is.na(data$w4_age_final)&
+            is.na(data$w5_age_final))
+na7=which(is.na(data$w1c1_U10)&
+            is.na(data$w2c1_U10)&
+            is.na(data$w2c2_U10)&
+            is.na(data$w3_U10)&
+            is.na(data$w4_U10)&
+            is.na(data$w5_U10))
+na8=which(is.na(data$w1c1_phq9cat)&
+            is.na(data$w2c1_pyphq9cat)&
+            is.na(data$w2c2_phq9cat)&
+            is.na(data$w3_slphq9cat)&
+            is.na(data$w4_slphq9cat)&
+            is.na(data$w5_slphq9cat))
+na9=which(is.na(data$w1c1_life_sumptsdworst)&
+            is.na(data$w2c1_life_sumptsdworst)&
+            is.na(data$w2c2_life_sumptsdworst)&
+            is.na(data$w3_life_sumptsdworst)&
+            is.na(data$w4_life_sumptsdworst)&
+            is.na(data$w5_life_sumptsdworst))
+na10=which(is.na(data$w1c1_traumanum)&
+             is.na(data$w2c1_traumanum)&
+             is.na(data$w2c2_traumanum)&
+             is.na(data$w3_traumanum)&
+             is.na(data$w4_traumanum)&
+             is.na(data$w5_traumanum))
+data=data[-Reduce(union,list(na1,na2,na3,na4,na5,na6,na7,na8,na9,na10)),]
+#############################################################################################################
+imp1=function(u){
   
-  e=mvrnorm(n,rep(0,b1*t),matrix(rho1,b1*t,b1*t)+diag(1-rho1,b1*t,b1*t))
-  for (i in 1:b1) {
-    em=cbind(em,c(t(e[,((i-1)*t+1):(i*t)])))
+  len=which(!is.na(u))[1]
+  return(u[len]-(len-1))
+}
+imp2=function(u){
+  
+  v=c()
+  for (j in 1:t) {
+    
+    len=which(!is.na(u))
+    len=len[which.min(abs(len-j))]
+    v[j]=u[len]
+  }
+  return(v)
+}
+na=function(u){
+  if(sum(is.na(u))==2){
+    return(NA)
+  }else{
+    return(na.omit(u))
   }
 }
-e=mvrnorm(n,rep(0,t),matrix(rho2,t,t)+diag(1-rho2,t,t))
-ey=c(t(e))
-#regression coefficients##########################################################
-AA=c(0.5,0.5,1,1)
+###############################################################################################################
+mi=which(colnames(data) %in% c('w1c1_traumanum','w2c1_traumanum','w2c2_traumanum','w3_traumanum','w4_traumanum','w5_traumanum'))
+data[,mi][is.na(data[,mi])]=0
 
-BB=matrix(0,p,t)
-BB[1,]=c(1,1,1,1)
-BB[2,]=c(1,1,1,1)
-BB[3,]=c(1,2,3,4)
-BB[4,]=c(4,3,2,1)
-BB[5,]=c(1,1,0,0)
-BB[6,]=c(1,0,1,0)
-BB[7,]=c(1,0,0,1)
-BB[8,]=c(0,1,1,0)
-BB[9,]=c(0,1,0,1)
-BB[10,]=c(0,0,1,1)
-BB[11,]=c(1,2,3,4)
-BB[12,]=c(4,3,2,1)
-BB=BB*(-0.5)
+name=c(colnames(data[,1:p]),"z1","z2","z3","z4","z5","z6","z7","z8","x","y","RESP","wave","g")
+new=data.frame(matrix(ncol=length(name),nrow=0))
+colnames(new)=name
+#data reshape###################################################################################################
+id=unique(data$RESP)
+for (i in 1:length(id)) {
+  
+  mid=data[which(data$RESP==id[i]),]
+  mid=mid[order(mid$wave),]
+  fir=mid[1,]
+  
+  wave=c(1:t)
+  RESP=rep(fir$RESP,t)
+  z1=rep(fir$smoke,t)
+  z2=rep(fir$race6cat==2,t)
+  z3=rep(fir$female,t)
+  
+  z4=na.omit(c(fir$w1_educ,fir$w2_educ,fir$w3_educ,fir$w4_educ,fir$w5_educ))[1]
+  z4=rep(z4,t)
+  
+  z5=na.omit(c(fir$w1c1_U10,fir$w2c1_U10,fir$w2c2_U10,fir$w3_U10,fir$w4_U10,fir$w5_U10))[1]
+  z5=rep(z5,t)
+  
+  z6=na.omit(c(fir$w1c1_phq9cat,fir$w2c1_pyphq9cat,fir$w2c2_phq9cat,fir$w3_slphq9cat,fir$w4_slphq9cat,fir$w5_slphq9cat))[1]
+  z6=rep(z6,t)
+  
+  z7=c(fir$w1_age_final,fir$w2_age_final,fir$w3_age_final,fir$w4_age_final,fir$w5_age_final)
+  z7=rep(imp1(z7),t)
+  
+  z8=rep(fir$Social_Cohesion,t)
+  ########################################################################################################################
+  y=c(fir$w1c1_life_sumptsdworst,na(c(fir$w2c1_life_sumptsdworst,fir$w2c2_life_sumptsdworst)),fir$w3_life_sumptsdworst,fir$w4_life_sumptsdworst,fir$w5_life_sumptsdworst)
+  y=imp2(y)
+  
+  x=c(fir$w1c1_traumanum,
+      fir$w1c1_traumanum+fir$w2c1_traumanum+fir$w2c2_traumanum,
+      fir$w1c1_traumanum+fir$w2c1_traumanum+fir$w2c2_traumanum+fir$w3_traumanum,
+      fir$w1c1_traumanum+fir$w2c1_traumanum+fir$w2c2_traumanum+fir$w3_traumanum+fir$w4_traumanum,
+      fir$w1c1_traumanum+fir$w2c1_traumanum+fir$w2c2_traumanum+fir$w3_traumanum+fir$w4_traumanum+fir$w5_traumanum)
+  ##########################################################################################################################
+  if(nrow(mid)==4){
+    cpg=rbind(mid[1,1:p],mid[2,1:p],NA,mid[3,1:p],mid[4,1:p]);g=rep(1,t)
+  }
+  
+  else if(nrow(mid)==3 & mid$wave[1]=="w1c1_bloodid" & mid$wave[2]=="w2_bloodid" & mid$wave[3]=="w4_bloodid"){
+    cpg=rbind(mid[1,1:p],mid[2,1:p],NA,mid[3,1:p],NA);g=rep(2,t)
+  }
+  else if(nrow(mid)==3 & mid$wave[1]=="w1c1_bloodid" & mid$wave[2]=="w2_bloodid" & mid$wave[3]=="w5_bloodid"){
+    cpg=rbind(mid[1,1:p],mid[2,1:p],NA,NA,mid[3,1:p]);g=rep(3,t)
+  }
+  else if(nrow(mid)==3 & mid$wave[1]=="w1c1_bloodid" & mid$wave[2]=="w4_bloodid" & mid$wave[3]=="w5_bloodid"){
+    cpg=rbind(mid[1,1:p],NA,NA,mid[2,1:p],mid[3,1:p]);g=rep(4,t)
+  }
+  else if(nrow(mid)==3 & mid$wave[1]=="w2_bloodid" & mid$wave[2]=="w4_bloodid" & mid$wave[3]=="w5_bloodid"){
+    cpg=rbind(NA,mid[1,1:p],NA,mid[2,1:p],mid[3,1:p]);g=rep(5,t)
+  }
+  
+  else if(nrow(mid)==2 & mid$wave[1]=="w1c1_bloodid" & mid$wave[2]=="w2_bloodid"){
+    cpg=rbind(mid[1,1:p],mid[2,1:p],NA,NA,NA);g=rep(6,t)
+  }
+  else if(nrow(mid)==2 & mid$wave[1]=="w1c1_bloodid" & mid$wave[2]=="w4_bloodid"){
+    cpg=rbind(mid[1,1:p],NA,NA,mid[2,1:p],NA);g=rep(7,t)
+  }
+  else if(nrow(mid)==2 & mid$wave[1]=="w1c1_bloodid" & mid$wave[2]=="w5_bloodid"){
+    cpg=rbind(mid[1,1:p],NA,NA,NA,mid[2,1:p]);g=rep(8,t)
+  }
+  else if(nrow(mid)==2 & mid$wave[1]=="w2_bloodid" & mid$wave[2]=="w4_bloodid"){
+    cpg=rbind(NA,mid[1,1:p],NA,mid[2,1:p],NA);g=rep(9,t)
+  }
+  else if(nrow(mid)==2 & mid$wave[1]=="w2_bloodid" & mid$wave[2]=="w5_bloodid"){
+    cpg=rbind(NA,mid[1,1:p],NA,NA,mid[2,1:p]);g=rep(10,t)
+  }
+  else if(nrow(mid)==2 & mid$wave[1]=="w4_bloodid" & mid$wave[2]=="w5_bloodid"){
+    cpg=rbind(NA,NA,NA,mid[1,1:p],mid[2,1:p]);g=rep(11,t)
+  }
+  
+  else if(nrow(mid)==1 & mid$wave[1]=="w1c1_bloodid"){
+    cpg=rbind(mid[,1:p],NA,NA,NA,NA);g=rep(12,t)
+  }
+  else if(nrow(mid)==1 & mid$wave[1]=="w2_bloodid"){
+    cpg=rbind(NA,mid[,1:p],NA,NA,NA);g=rep(13,t)
+  }
+  else if(nrow(mid)==1 & mid$wave[1]=="w4_bloodid"){
+    cpg=rbind(NA,NA,NA,mid[,1:p],NA);g=rep(14,t)
+  }
+  else if(nrow(mid)==1 & mid$wave[1]=="w5_bloodid"){
+    cpg=rbind(NA,NA,NA,NA,mid[,1:p]);g=rep(15,t)
+  }
+  new=rbind(new,cbind(cpg,z1,z2,z3,z4,z5,z6,z7,z8,x,y,RESP,wave,g))
+}
+#############################################################################################################
+new=new[-which(new$wave==3),]
+t=4
+new$wave=rep(c(1:t),length(id))
+#normalization################################################################################################
+normal=function(u){ (u-min(u))/(max(u)-min(u)) }
+new$z1=normal(new$z1)
+new$z2=normal(new$z2)
+new$z3=normal(new$z3)
+new$z4=normal(new$z4)
+new$z5=normal(new$z5)
+new$z6=normal(new$z6)
+new$z7=normal(new$z7)
+new$z8=normal(new$z8)
+new$x=normal(new$x)
+new$y=log(new$y)
+#residuals after adjustment############################################################################################
+new$y=lm(y~z1+z2+z3+z4+z5+z6+z7+z8,data=new)$residuals
+new=new[,-c((p+1):(p+q))]
+#screening#############################################################################################################
+data=matrix(unlist(new),nrow=nrow(new))
+med=matrix(NA,t,p)
+sn=c()
 
-GG=matrix(0,p,t)
-GG[1,]=c(1,1,1,1)
-GG[2,]=c(1,1,1,1)
-GG[3,]=c(1,2,3,4)
-GG[4,]=c(4,3,2,1)
-GG[5,]=c(1,1,0,0)
-GG[6,]=c(1,0,1,0)
-GG[7,]=c(1,0,0,1)
-GG[8,]=c(0,1,1,0)
-GG[9,]=c(0,1,0,1)
-GG[10,]=c(0,0,1,1)
-GG[13,]=c(1,2,3,4)
-GG[14,]=c(4,3,2,1)
-GG=GG*(0.5)
-
-DD=0
-TT=rep(0,p)
-parT=c(c(rbind(AA,BB,GG)),DD,TT)
-#mediator+outcome####################################################################
 for (j in 1:t) {
   
-  sub=which(data[,p+4]==j)
-  data[sub,1:p]=cbind(data[sub,p+1],1)%*%rbind(GG[,j],TT)+em[sub,]
-  data[sub,p+2]=cbind(data[sub,c(p+1,1:p)],1)%*%c(AA[j],BB[,j],DD)+ey[sub]
-}
-#missing at random####################################################################
-ind=1:n
-len=c(50,100,100,100)
-pro=rowSums(abs(matrix(data[,p+1],nrow=n,byrow=T)))
-for (i in c(1,2,3,4)) {
+  sub=na.omit(data[which(data[,p+4]==j),])
+  sn[j]=floor(nrow(sub)/log(nrow(sub)))
   
-  sub=sample(ind,len[i],prob=pro[ind])
-  data[which(data[,p+3] %in% sub),p+5]=i
-  
-  ind=setdiff(ind,sub)
+  for (m in 1:p) {
+    a=lm(sub[,p+2]~sub[,c(m,p+1)])$coefficients[2]
+    b=lm(sub[,m]~sub[,p+1])$coefficients[2]
+    med[j,m]=abs(a*b)
+  }
 }
-data[which(data[,p+5]==2 & data[,p+4]%in%c(4)),1:p]=NA
-data[which(data[,p+5]==3 & data[,p+4]%in%c(1,2)),1:p]=NA
-data[which(data[,p+5]==4 & data[,p+4]%in%c(1,2,4)),1:p]=NA
-#longitudinal multiple imputation#####################################################
-source(paste0(file.path(Sys.getenv("USERPROFILE"),"Desktop"),"/simulation/LMI.R"))
-data_lmi=LMI(data,p,t,patt="A")
-data_cc=data_lmi[[1]][[1]] #complete-case analysis
-#matrix completion####################################################################
+a1=order(med[1,],decreasing=T)[1:sn[1]]
+a2=order(med[2,],decreasing=T)[1:sn[2]]
+a3=order(med[3,],decreasing=T)[1:sn[3]]
+a4=order(med[4,],decreasing=T)[1:sn[4]]
+
+sis=Reduce(union,list(a1,a2,a3,a4))
+dna=name[sis]
+data=cbind(data[,sis],data[,(p+1):ncol(data)]);p=length(dna)
+#longitudinal multiple imputation#################################################################################
+source(paste0(file.path(Sys.getenv("USERPROFILE"),"Desktop"),"/application/LMI.R"))
+data_com=LMI(data,p,t)
+data_cc=data_com[[1]][[1]][[1]]
+#matrix completion################################################################################################
 fit=softImpute(data[,1:(p+2)],rank=min(dim(data[,1:(p+2)]))-1)
 data_soft=cbind(complete(data[,1:(p+2)],fit),data[,(p+3):(p+5)])
-#single imputation####################################################################
-miss=list(c(1,2,3,4),c(1,2,3),c(3,4),3)
+#single imputation#################################################################################################
+miss=list(c(1,2,3,4),c(1,2,3),c(1,2,4),c(1,3,4),c(2,3,4),
+          c(1,2),c(1,3),c(1,4),c(2,3),c(2,4),c(3,4),1,2,3,4)
 for (i in 2:length(miss)) {
   
   sub=data[which(data[,p+5]==i & data[,p+4]%in%miss[[i]]),]
   ave=rowsum(sub[,1:p],sub[,p+3],reorder=FALSE)/length(miss[[i]])
+  
   for (j in setdiff(1:t,miss[[i]])) { data[which(data[,p+5]==i & data[,p+4]%in%c(j)),1:p]=ave }
 }
 data_si=data
-#GMM_PCA#################################################################################
-p=50;t=4;l1=0.1;l2=0.01;patt="A"
-source(paste0(file.path(Sys.getenv("USERPROFILE"),"Desktop"),"/simulation/GMM_PCA.R"))
-theta1=GMM_PCA(data=data_lmi,p=p,t=t,lam1=l1,lam2=l2,patt=patt)
+#GMM_PCA##################################################################################
+l1=0.0003;l2=0.0005
+source(paste0(file.path(Sys.getenv("USERPROFILE"),"Desktop"),"/application/GMM_PCA.R"))
+theta1=GMM_PCA(data_com=data_com,p=p,t=t,lam1=l1,lam2=l2)
 #tuning
-lam1_seq=seq(0.01,0.1,length.out=5)
-lam2_seq=seq(0.001,0.01,length.out=5)
+lam1_seq=seq(l1/10,l1,length.out=5)
+lam2_seq=seq(l2/10,l2,length.out=5)
 grid=expand.grid(lam1=lam1_seq,lam2=lam2_seq)
-source(paste0(file.path(Sys.getenv("USERPROFILE"),"Desktop"),"/simulation/bic.R"))
+source(paste0(file.path(Sys.getenv("USERPROFILE"),"Desktop"),"/application/bic.R"))
 result=apply(grid,1,function(params){
-  theta=GMM_PCA(data=data_lmi,p=p,t=t,lam1=params["lam1"],lam2=params["lam2"],patt=patt)
-  bic_value=bic(data=data_lmi,theta=theta,p=p,t=t)
+  theta=GMM_PCA(data=data_com,p=p,t=t,lam1=params["lam1"],lam2=params["lam2"])
+  bic_value=bic(data=data_com[[1]],theta=theta,p=p,t=t)
   list(theta=theta,bic=bic_value)})
 theta1=result[[which.min(sapply(result,`[[`,"bic"))]]$theta
 #complete-case analysis###################################################################
-source(paste0(file.path(Sys.getenv("USERPROFILE"),"Desktop"),"/simulation/CC.R"))
+source(paste0(file.path(Sys.getenv("USERPROFILE"),"Desktop"),"/application/CC.R"))
 theta2=CC(data=data_cc,p=p,t=t,lam1=l1,lam2=l2)
 theta3=CC(data=data_soft,p=p,t=t,lam1=l1,lam2=l2)
 theta4=CC(data=data_si,p=p,t=t,lam1=l1,lam2=l2)
 #cross-sectional analysis#################################################################
-source(paste0(file.path(Sys.getenv("USERPROFILE"),"Desktop"),"/simulation/CS.R"))
+source(paste0(file.path(Sys.getenv("USERPROFILE"),"Desktop"),"/application/CS.R"))
 theta5=CS(data=data_cc,p=p,t=t,lam1=l1)
 theta6=CS(data=data_soft,p=p,t=t,lam1=l1)
 theta7=CS(data=data_si,p=p,t=t,lam1=l1)
 #mixed-effects models#####################################################################
-source(paste0(file.path(Sys.getenv("USERPROFILE"),"Desktop"),"/simulation/MIX.R"))
+source(paste0(file.path(Sys.getenv("USERPROFILE"),"Desktop"),"/application/MIX.R"))
 theta8=MIX(data=data_cc,p=p,t=t)
 theta9=MIX(data=data_soft,p=p,t=t)
 theta10=MIX(data=data_si,p=p,t=t)
 #pathway lasso############################################################################
-source(paste0(file.path(Sys.getenv("USERPROFILE"),"Desktop"),"/simulation/PATH.R"))
-theta11=PATH(data=data_cc,p=p,t=t,tun=F,L=l1/10,R=l1,lam=l1)
-theta12=PATH(data=data_soft,p=p,t=t,tun=F,L=l1/10,R=l1,lam=l1)
-theta13=PATH(data=data_si,p=p,t=t,tun=F,L=l1/10,R=l1,lam=l1)
+source(paste0(file.path(Sys.getenv("USERPROFILE"),"Desktop"),"/application/PATH.R"))
+theta11=PATH(data=data_cc,p=p,t=t,tun=F,L=l1/10,R=l1,lam=l1*100)
+theta12=PATH(data=data_soft,p=p,t=t,tun=F,L=l1/10,R=l1,lam=l1*100)
+theta13=PATH(data=data_si,p=p,t=t,tun=F,L=l1/10,R=l1,lam=l1*100)
 #de-biased lasso and false discovery rate control#########################################
-source(paste0(file.path(Sys.getenv("USERPROFILE"),"Desktop"),"/simulation/HIMA.R"))
+source(paste0(file.path(Sys.getenv("USERPROFILE"),"Desktop"),"/application/HIMA.R"))
 theta14=HIMA(data=data_cc,p=p,t=t)
 theta15=HIMA(data=data_soft,p=p,t=t)
 theta16=HIMA(data=data_si,p=p,t=t)
-#Bayesian sparse models###################################################################
-source(paste0(file.path(Sys.getenv("USERPROFILE"),"Desktop"),"/simulation/BAY.R"))
+#Bayesian sparse models####################################################################
+source(paste0(file.path(Sys.getenv("USERPROFILE"),"Desktop"),"/application/BAY.R"))
 theta17=BAY(data=data_cc,p=p,t=t)
 theta18=BAY(data=data_soft,p=p,t=t)
 theta19=BAY(data=data_si,p=p,t=t)
