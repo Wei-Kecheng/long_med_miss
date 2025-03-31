@@ -1,26 +1,20 @@
 # Simulation codes
 ------------------------------------------------
 # Description
-- LMI: Performs longitudinal multiple imputation.
-- GMM_PCA: Implements the generalized method of moments with principal component analysis to estimate parameters.
-- CS: Conducts cross-sectional mediation analysis following the method proposed by Xue et al. (2022).
-- MIX: Fits mixed-effects models with time interactions and lasso regularization, based on Rijnhart et al. (2022).
-- Path: Implements linear structural equation modeling with pathway lasso penalty, as described in Zhao and Luo (2022).
-- HIMA: Performs high-dimensional mediation analysis using de-biased lasso and false discovery rate control, following Perera et al. (2022).
-- Bayes: Applies Bayesian sparse modeling with continuous shrinkage priors, based on Song et al. (2020).
+For simulation data, we first generate fully observed longitudinal measurements and then introduce missingness. We implement various approaches to handle missing data and identify important mediators.
 
 # Usage
-- LMI (data,p,t)
-- GMM_PCA (data,p,t,lam1,lam2,a=3.7,c=10,patt)
+- `LMI(data,p,t,patt)`
+- `GMM_PCA(data,p,t,lam1,lam2,a=3.7,c=10,patt)`
   
 # Arguments
-LMI(data,p,t)
+`LMI(data,p,t,patt)`
 - data: A data frame with nt rows and p+5 columns, representing n samples observed over multiple time points. Each row corresponds to an observation at a specific time point. Columns 1 to p: mediators. Column p+1: exposure. Column p+2: outcome. Column p+3: sample ID. Column p+4: time ID. Column p+5: missingness group ID. Missing values are denoted as NA.
 - p: Number of mediators.
 - t: Number of time points.
 - patt: Specifies different non-monotone missingness structures.
 
-GMM_PCA(data,p,t,lam1,lam2,a=3.7,c=10)
+`GMM_PCA(data,p,t,lam1,lam2,a=3.7,c=10)`
 - data: A list containing multiple imputed datasets.
 - p: Number of mediators.
 - t: Number of time points.
@@ -30,11 +24,52 @@ GMM_PCA(data,p,t,lam1,lam2,a=3.7,c=10)
 - c: Tuning parameter for the bi-level penalty, with a default value of 10.
 - patt: Specifies different non-monotone missingness structures.
 
+` CC=function(data,p,t,lam1,lam2,a=3.7,c=10)`
+- data: An imputed dataset without missingness.
+- p: Number of mediators.
+- t: Number of time points.
+- lam1: Regularization parameter for the mediation effect penalty.
+- lam2: Regularization parameter for the time-varying effect penalty.
+- a: Tuning parameter for the SCAD penalty, with a default value of 3.7.
+- c: Tuning parameter for the bi-level penalty, with a default value of 10.
+
+` CS=function(data,p,t,lam1,a=3.7,c=10)`
+- data: An imputed dataset without missingness.
+- p: Number of mediators.
+- t: Number of time points.
+- lam1: Regularization parameter for the mediation effect penalty.
+- a: Tuning parameter for the SCAD penalty, with a default value of 3.7.
+- c: Tuning parameter for the bi-level penalty, with a default value of 10.
+
+`MIX(data,p,t)`
+- data: An imputed dataset without missingness.
+- p: Number of mediators.
+- t: Number of time points.
+
+`PATH(data,p,t,tun,L,R,lam)`
+- data: An imputed dataset without missingness.
+- p: Number of mediators.
+- t: Number of time points.
+- tun: Logical flag indicating whether to perform regularization parameter selection using the stability criterion. If TRUE, a grid search is conducted within the range [L,R]. If FALSE, the function runs with the specified regularization parameter lam.
+- L: Left bound of the regularization parameter search range.
+- R: Right bound of the regularization parameter search range.
+- lam: Regularization parameter for the mediation effect penalty.
+
+`HIMA(data,p,t)`
+- data: An imputed dataset without missingness.
+- p: Number of mediators.
+- t: Number of time points.
+
+`BAY(data,p,t)`
+- data: An imputed dataset without missingness.
+- p: Number of mediators.
+- t: Number of time points.
+
 # Value
-LMI(data,p,t)
+`LMI(data,p,t,patt)`
 - Returns a list of multiple imputed datasets.
 
-GMM_PCA (data,p,t,lam1,lam2,a=3.7,c=10,patt)
+`GMM_PCA (data,p,t,lam1,lam2,a=3.7,c=10,patt)`
 - Returns a vector of estimated coefficients.
 
 # Examples
@@ -192,11 +227,3 @@ theta17=BAY(data=data_cc,p=p,t=t)
 theta18=BAY(data=data_soft,p=p,t=t)
 theta19=BAY(data=data_si,p=p,t=t)
 ```
-
-# References
-- XUE, F., TANG, X., KIM, G., KOENEN, K. C., MARTIN, C. L., GALEA, S., WILDMAN, D., UDDIN, M. and QU, A. (2022). Heterogeneous mediation analysis on epigenomic ptsd and traumatic stress in a predominantly
-African American cohort. J. Am. Stat. Assoc. 117 1669–1683.
-- RIJNHART, J. J. M., TWISK, J. W. R., VALENTE, M. J. and HEYMANS, M. W. (2022). Time lags and time interactions in mixed effects models impacted longitudinal mediation effect estimates. J. Clin. Epidemiol. 151 143–150.
-- ZHAO, Y. and LUO, X. (2022). Pathway lasso: Pathway estimation and selection with high-dimensional mediators. Stat. Its Interface 15 39–50.
-- PERERA, C., ZHANG, H., ZHENG, Y., HOU, L., QU, A., ZHENG, C., XIE, K. and LIU, L. (2022). HIMA2: High-dimensional mediation analysis and its application in epigenome-wide DNA methylation data. BMC Bioinform. 23 296.
-- SONG, Y., ZHOU, X., ZHANG, M., ZHAO, W., LIU, Y., KARDIA, S. L. R., DIEZ ROUX, A. V., NEEDHAM, B. L., SMITH, J. A. and MUKHERJEE, B. (2020). Bayesian shrinkage estimation of high dimensional causal mediation effects in omics studies. Biometrics 76 700–710.
