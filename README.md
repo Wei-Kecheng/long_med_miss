@@ -1,8 +1,7 @@
 # Application codes
 ------------------------------------------------
 # Description
-Data for application can be requested from the Detroit Neighborhood Health Study (DNHS) website:
-\href{https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/study.cgi?study_id=phs000560.v2.p1}{https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/study.cgi?study\_id=phs000560.v2.p1}
+Data for application can be requested from the Detroit Neighborhood Health Study (DNHS) website: https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/study.cgi?study_id=phs000560.v2.p1
 
 # Usage
 - `LMI(data,p,t,patt)`
