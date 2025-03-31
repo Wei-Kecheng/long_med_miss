@@ -9,10 +9,6 @@
 # Description
 This repository provides code for longitudinal mediation analysis with missing data (`long_med_miss`), including implementations for both simulation and application. 
 
-# Branches
-- [Simulation Branch](https://github.com/Wei-Kecheng/long_med_miss/tree/simulation): Code for simulation.
-- [Application Branch](https://github.com/Wei-Kecheng/long_med_miss/tree/application): Code for application.
-
 # R functions
 - `LMI`: Implements the proposed longitudinal multiple imputation method.
 - `GMM_PCA`: Applies the generalized method of moments with principal component analysis for parameter estimation.
