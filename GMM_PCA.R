@@ -384,7 +384,7 @@ GMM_PCA=function(data_com,p,t,lam1,lam2,a=3.7,c=10){
       return(c(-2*ga)+c(pp1)+c(pp2))
     }
     ###############################################################################################################
-    par=optim(old,fn=obj,gr=gra,method="BFGS",control=list(trace=0,maxit=10))$par
+    par=optim(old,fn=obj,gr=gra,method="BFGS",control=list(trace=0,maxit=10000))$par
     if((sum(abs(old-par))<0.000001) | (sss==control)){break}
     sss=sss+1
   }
