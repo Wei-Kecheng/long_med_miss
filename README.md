@@ -110,7 +110,7 @@ data=matrix(NA,n*t,p+5)
 data[,p+1]=c(t(x))
 data[,p+3]=rep(1:n,each=t)
 data[,p+4]=rep(1:t,n)
-#residuals#####################################################################
+#residuals#######################################################################
 b=10;b1=p/b
 em=c()
 for (j in 1:b) {
@@ -179,14 +179,14 @@ for (i in c(1,2,3,4)) {
 data[which(data[,p+5]==2 & data[,p+4]%in%c(4)),1:p]=NA
 data[which(data[,p+5]==3 & data[,p+4]%in%c(1,2)),1:p]=NA
 data[which(data[,p+5]==4 & data[,p+4]%in%c(1,2,4)),1:p]=NA
-#longitudinal multiple imputation######################################################
+#longitudinal multiple imputation#####################################################
 source(paste0(file.path(Sys.getenv("USERPROFILE"),"Desktop"),"/simulation/LMI.R"))
 data_lmi=LMI(data,p,t,patt="A")
 data_cc=data_lmi[[1]][[1]] #complete-case analysis
-#matrix completion######################################################################
+#matrix completion####################################################################
 fit=softImpute(data[,1:(p+2)],rank=min(dim(data[,1:(p+2)]))-1)
 data_soft=cbind(complete(data[,1:(p+2)],fit),data[,(p+3):(p+5)])
-#single imputation#####################################################################
+#single imputation####################################################################
 miss=list(c(1,2,3,4),c(1,2,3),c(3,4),3)
 for (i in 2:length(miss)) {
   
@@ -219,22 +219,22 @@ source(paste0(file.path(Sys.getenv("USERPROFILE"),"Desktop"),"/simulation/CS.R")
 theta5=CS(data=data_cc,p=p,t=t,lam1=l1)
 theta6=CS(data=data_soft,p=p,t=t,lam1=l1)
 theta7=CS(data=data_si,p=p,t=t,lam1=l1)
-#mixed-effects models######################################################################
+#mixed-effects models#####################################################################
 source(paste0(file.path(Sys.getenv("USERPROFILE"),"Desktop"),"/simulation/MIX.R"))
 theta8=MIX(data=data_cc,p=p,t=t)
 theta9=MIX(data=data_soft,p=p,t=t)
 theta10=MIX(data=data_si,p=p,t=t)
-#pathway lasso##############################################################################
+#pathway lasso############################################################################
 source(paste0(file.path(Sys.getenv("USERPROFILE"),"Desktop"),"/simulation/PATH.R"))
 theta11=PATH(data=data_cc,p=p,t=t,tun=F,L=l1/10,R=l1,lam=l1)
 theta12=PATH(data=data_soft,p=p,t=t,tun=F,L=l1/10,R=l1,lam=l1)
 theta13=PATH(data=data_si,p=p,t=t,tun=F,L=l1/10,R=l1,lam=l1)
-#de-biased lasso and false discovery rate control##########################################
+#de-biased lasso and false discovery rate control#########################################
 source(paste0(file.path(Sys.getenv("USERPROFILE"),"Desktop"),"/simulation/HIMA.R"))
 theta14=HIMA(data=data_cc,p=p,t=t)
 theta15=HIMA(data=data_soft,p=p,t=t)
 theta16=HIMA(data=data_si,p=p,t=t)
-#Bayesian sparse models####################################################################
+#Bayesian sparse models###################################################################
 source(paste0(file.path(Sys.getenv("USERPROFILE"),"Desktop"),"/simulation/BAY.R"))
 theta17=BAY(data=data_cc,p=p,t=t)
 theta18=BAY(data=data_soft,p=p,t=t)
