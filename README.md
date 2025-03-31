@@ -6,6 +6,13 @@ For simulation data, we first generate fully observed longitudinal measurements 
 # Usage
 - `LMI(data,p,t,patt)`
 - `GMM_PCA(data,p,t,lam1,lam2,a=3.7,c=10,patt)`
+- `CC=function(data,p,t,lam1,lam2,a=3.7,c=10)`
+- `CS=function(data,p,t,lam1,a=3.7,c=10)`
+- `MIX(data,p,t)`
+- `PATH(data,p,t,tun,L,R,lam)`
+- `HIMA(data,p,t)`
+- `BAY(data,p,t)`
+
   
 # Arguments
 `LMI(data,p,t,patt)`
@@ -69,7 +76,13 @@ For simulation data, we first generate fully observed longitudinal measurements 
 `LMI(data,p,t,patt)`
 - Returns a list of multiple imputed datasets.
 
-`GMM_PCA (data,p,t,lam1,lam2,a=3.7,c=10,patt)`
+`GMM_PCA(data,p,t,lam1,lam2,a=3.7,c=10,patt)`
+`CC=function(data,p,t,lam1,lam2,a=3.7,c=10)`
+`CS=function(data,p,t,lam1,a=3.7,c=10)`
+`MIX(data,p,t)`
+`PATH(data,p,t,tun,L,R,lam)`
+`HIMA(data,p,t)`
+`BAY(data,p,t)`
 - Returns a vector of estimated coefficients.
 
 # Examples
