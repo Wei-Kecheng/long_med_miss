@@ -21,7 +21,7 @@ For simulation data, we first generate fully observed longitudinal measurements 
 - t: Number of time points.
 - patt: Specifies different non-monotone missingness structures.
 
-`GMM_PCA(data,p,t,lam1,lam2,a=3.7,c=10)`
+`GMM_PCA(data,p,t,lam1,lam2,a=3.7,c=10,patt)`
 - data: A list containing multiple imputed datasets.
 - p: Number of mediators.
 - t: Number of time points.
