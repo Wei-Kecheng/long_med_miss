@@ -7,7 +7,7 @@
 ----------------------------------------------------
 
 # Description
-This repository provides code for longitudinal mediation analysis with missing data (`long_med_miss`), including implementations for both simulation and application. 
+This repository provides code for longitudinal mediation analysis with missing data (`long_med_miss`), including implementations for both simulation and application, with the article available at https://www.biorxiv.org/content/10.1101/2024.02.06.579228v2.abstract.
 
 # R functions
 - `LMI`: Implements the proposed longitudinal multiple imputation method.
